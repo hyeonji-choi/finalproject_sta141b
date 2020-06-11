@@ -11,8 +11,11 @@ library(tidyverse)
 library(jsonlite)
 library(httr)
 library(lubridate)
+library(rsconnect)
 
-
+rsconnect::setAccountInfo(name='hyeonjichoi',
+                          token='747CA8BA129241BC1349267730D50668',
+                          secret='pyPdud5qsIsC+iYUIdGQb4QJ67P+gfKSa71fDUHM')
 
 ###API
 
@@ -142,10 +145,6 @@ mexican_df <- mexican_df %>%
   mutate(health = mexican_df$recipe$healthLabels) %>%
   select(-recipe, -bookmarked, -bought)
 
-completeset$ingredients %>%
-  count()
-
-
 completeset<- rbind(american_df,asian_df,mediterranean_df,mexican_df)
 
 cuisinelist <- completeset %>%
@@ -153,12 +152,6 @@ cuisinelist <- completeset %>%
   unique()
 
 ##SHINY
-
-#conditionalpanel <- different text input for diff input
-
-##helpful links
-#- https://www.youtube.com/watch?v=Gyrfsrd4zK0
-
 
 ui <- fluidPage(
   navbarPage("What Should I Cook?", theme = shinytheme("united"),
@@ -205,20 +198,20 @@ ui <- fluidPage(
                         ),
                         
                         mainPanel(
-                          textOutput("recipeText2"),
-                          htmlOutput("recipeImage2"),
-                          DT::dataTableOutput("recipeTable")
-                        )
-                      )
-             ),
-             
+                          
+                          fluidRow(
+                            h6("Here's our top pick!", align = "center"),
+                            textOutput("recipeText2"),
+                            htmlOutput("recipeImage2"),
+                            DT::dataTableOutput("recipeTable")
+                        )))),
+
              ##About tab
              tabPanel("About", fluid = TRUE, icon = icon("info-circle"),
                       h4(p("About the Project")),
-                      h5(p("This project is intended to help users with their decision blah blah"))
+                      h5(p("This project is intended to help college students who have time contraint but want to cook. You can find recipes depending on the cusine type, time it takes to prepare, and calorie amount you desire to consume."))
              )
   ))
-
 # Define server
 server <- function(input, output, session) {
   
@@ -241,22 +234,19 @@ server <- function(input, output, session) {
       head(1)
   })
   
-  ##recipe 1 text (textOutput)
-  output$recipeText1 <- renderText({
-    req(input$calorieMax)
-    req(input$calorieMin)
-    req(input$cuisineType)
-    req(input$timeMax)
-    "What you can cook with the least number of ingredients"
-  })
-  
-  ##recipe 1 image (htmlOutput)
   imgurl <- reactive({
     inputData() %>%
       select(image) %>%
       head(1)
   })
-  output$recipeImage1 <- renderUI({tags$img(src = imgurl())})
+  
+  ##Recipe recommendation text
+  output$recipeText2 <- renderText(
+    
+  )
+  
+  ##Recipe Recommentation Image
+  output$recipeImage2 <- renderUI({tags$img(src = imgurl())})
   
   ##recipe 2 text
   output$recipeText2 <- renderText({
@@ -272,17 +262,7 @@ server <- function(input, output, session) {
       input$calofirMax)
   })
   
-  ##recipe 2 image
-  
-  #  output$inputData <- renderText({
-  #   src <- inputData %>%
-  #    select(image) %>%
-  #   head(1)
-  #c('<img src="',src,'">')
-  #})
-  
-  ##recipe table (dataTableOutput)
-  
+  ##Table
   output$recipeTable <- DT::renderDataTable({
     DT::datatable(
       unique(inputData()),
